@@ -10,7 +10,7 @@ static void doSqrt(std::span<double> values) {
    }
 }
 
-unsigned exceptions(std::span<double> values, unsigned repeat) {
+unsigned exceptionsSqrt(std::span<double> values, unsigned repeat) {
    unsigned failures = 0;
    for (unsigned index = 0; index != repeat; ++index) {
       try {
@@ -18,4 +18,16 @@ unsigned exceptions(std::span<double> values, unsigned repeat) {
       } catch (const InvalidValue& v) { ++failures; }
    }
    return failures;
+}
+
+static unsigned doFib(unsigned n, unsigned maxDepth) {
+   if (!maxDepth) throw InvalidValue();
+   if (n <= 2) return 1;
+   return doFib(n - 2, maxDepth - 1) + doFib(n - 1, maxDepth - 1);
+}
+
+unsigned exceptionsFib(unsigned n, unsigned maxDepth) {
+   try {
+      return doFib(n, maxDepth);
+   } catch (const InvalidValue&) { return 0; }
 }

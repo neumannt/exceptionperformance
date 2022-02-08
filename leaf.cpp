@@ -14,7 +14,7 @@ static leaf::result<void> doSqrt(std::span<double> values) {
    return {};
 }
 
-unsigned leafResult(std::span<double> values, unsigned repeat) {
+unsigned leafResultSqrt(std::span<double> values, unsigned repeat) {
    unsigned failures = 0;
    for (unsigned index = 0; index != repeat; ++index) {
       leaf::try_handle_some([&]() -> leaf::result<void> {
@@ -25,4 +25,24 @@ unsigned leafResult(std::span<double> values, unsigned repeat) {
                             });
    }
    return failures;
+}
+
+static leaf::result<unsigned> doFib(unsigned n, unsigned maxDepth) {
+   if (!maxDepth) return leaf::new_error(InvalidValue{});
+   if (n <= 2) return 1;
+   BOOST_LEAF_AUTO(n2, doFib(n - 2, maxDepth - 1));
+   BOOST_LEAF_AUTO(n1, doFib(n - 1, maxDepth - 1));
+   return n2 + n1;
+}
+
+unsigned leafResultFib(unsigned n, unsigned maxDepth) {
+   unsigned result = ~0u;
+   leaf::try_handle_some([&]() -> leaf::result<void> {
+         BOOST_LEAF_AUTO(v, doFib(n, maxDepth));
+         result = v;
+         return {}; },
+                         [&](InvalidValue) {
+                            result = 0;
+                         });
+   return result;
 }

@@ -8,24 +8,35 @@
 
 using namespace std;
 
-unsigned exceptions(span<double> values, unsigned repeat);
-unsigned leafResult(span<double> values, unsigned repeat);
-unsigned herbceptionEmulation(span<double> values, unsigned repeat);
+unsigned exceptionsSqrt(span<double> values, unsigned repeat);
+unsigned exceptionsFib(unsigned n, unsigned maxDepth);
+unsigned leafResultSqrt(span<double> values, unsigned repeat);
+unsigned leafResultFib(unsigned n, unsigned maxDepth);
+unsigned herbceptionEmulationSqrt(span<double> values, unsigned repeat);
+unsigned herbceptionEmulationFib(unsigned n, unsigned maxDepth);
 
-using TestedFunction = unsigned (*)(span<double>, unsigned);
+using TestedFunctionSqrt = unsigned (*)(span<double>, unsigned);
+using TestedFunctionFib = unsigned (*)(unsigned, unsigned);
 
-// Perform one run with a certain error probability
-static unsigned doTest(TestedFunction func, unsigned errorRate, unsigned seed) {
-   // A weak but fast PRNG is good enough for this. Use xorshift.
-   // We seed it with the thread it to get deterministic behavior
-   auto random = [state = (seed << 1) | 1]() mutable {
+// A weak but fast PRNG is good enough for this. Use xorshift.
+// We seed it with the thread id to get deterministic behavior
+struct Random {
+   uint64_t state;
+   Random(uint64_t seed) : state((seed << 1) | 1) {}
+
+   uint64_t operator()() {
       uint64_t x = state;
       x ^= x >> 12;
       x ^= x << 25;
       x ^= x >> 27;
       state = x;
       return x * 0x2545F4914F6CDD1DULL;
-   };
+   }
+};
+
+// Perform one run with a certain error probability
+static unsigned doTest(TestedFunctionSqrt func, unsigned errorRate, unsigned seed) {
+   Random random(seed);
 
    // Prepare an array of values
    array<double, 100> values;
@@ -52,16 +63,41 @@ static unsigned doTest(TestedFunction func, unsigned errorRate, unsigned seed) {
    return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
 };
 
+// Perform one run with a certain error probability
+static unsigned doTest(TestedFunctionFib func, unsigned errorRate, unsigned seed) {
+   Random random(seed);
+
+   // Execute the function n times and measure the runtime
+   auto start = std::chrono::steady_clock::now();
+   constexpr unsigned repeat = 10000;
+   constexpr unsigned depth = 20, expected = 6765;
+   unsigned result = 0;
+   for (unsigned index = 0; index != repeat; ++index) {
+      // Cause a failure with a certain probability
+      unsigned maxDepth = depth + 1;
+      if ((random() % 1000) < errorRate) maxDepth = depth - 1;
+
+      // Call the function itself
+      result += (func(depth, maxDepth) == expected);
+   }
+   if (!result)
+      cerr << "invalid result!" << endl;
+   auto stop = std::chrono::steady_clock::now();
+
+   return std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+};
+
 // Perform the test using n threads
-static unsigned doTestMultithreaded(TestedFunction func, unsigned errorRate, unsigned threadCount) {
-   if (threadCount <= 1) return doTest(func, errorRate, 0);
+template <class T>
+static unsigned doTestMultithreaded(T func, unsigned errorRate, unsigned threadCount) {
+   if (threadCount <= 1) return func(errorRate, 0);
 
    vector<thread> threads;
    atomic<unsigned> maxDuration{0};
    threads.reserve(threadCount);
    for (unsigned index = 0; index != threadCount; ++index) {
       threads.push_back(thread([index, func, errorRate, &maxDuration]() {
-         unsigned duration = doTest(func, errorRate, index);
+         unsigned duration = func(errorRate, index);
          unsigned current = maxDuration.load();
          while ((duration > current) && (!maxDuration.compare_exchange_weak(current, duration))) {}
       }));
@@ -70,43 +106,65 @@ static unsigned doTestMultithreaded(TestedFunction func, unsigned errorRate, uns
    return maxDuration.load();
 }
 
-static void runTests(const char* name, TestedFunction func, span<const unsigned> threadCounts) {
-   cout << "testing " << name << " using";
-   for (auto c : threadCounts) cout << " " << c;
-   cout << " threads" << endl;
+static void runTests(const vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib>>& tests, span<const unsigned> threadCounts) {
+   auto announce = [threadCounts](const char* name) {
+      cout << "testing " << name << " using";
+      for (auto c : threadCounts) cout << " " << c;
+      cout << " threads" << endl;
+   };
 
    const unsigned failureRates[] = {0, 1, 10, 100};
-   for (unsigned fr : failureRates) {
-      cout << "failure rate " << (static_cast<double>(fr) / 10.0) << "%:";
-      for (auto tc : threadCounts)
-         cout << " " << doTestMultithreaded(func, fr, tc);
-      cout << endl;
+
+   cout << "Testing unwinding performance: sqrt computation with occasional errors" << endl
+        << endl;
+   for (auto& t : tests) {
+      announce(get<0>(t));
+      for (unsigned fr : failureRates) {
+         cout << "failure rate " << (static_cast<double>(fr) / 10.0) << "%:";
+         for (auto tc : threadCounts)
+            cout << " " << doTestMultithreaded([func = get<1>(t)](unsigned errorRate, unsigned id) { return doTest(func, errorRate, id); }, fr, tc);
+         cout << endl;
+      }
    }
+   cout << endl;
+
+   cout << "Testing invocation overhead: recursive fib with occasional errors" << endl
+        << endl;
+   for (auto& t : tests) {
+      announce(get<0>(t));
+      for (unsigned fr : failureRates) {
+         cout << "failure rate " << (static_cast<double>(fr) / 10.0) << "%:";
+         for (auto tc : threadCounts)
+            cout << " " << doTestMultithreaded([func = get<2>(t)](unsigned errorRate, unsigned id) { return doTest(func, errorRate, id); }, fr, tc);
+         cout << endl;
+      }
+   }
+   cout << endl;
 }
 
 static vector<unsigned> buildThreadCounts(unsigned maxCount) {
    vector<unsigned> threadCounts{1};
-   while(threadCounts.back() < maxCount) threadCounts.push_back(min(threadCounts.back() * 2, maxCount));
+   while (threadCounts.back() < maxCount) threadCounts.push_back(min(threadCounts.back() * 2, maxCount));
    return threadCounts;
 }
 
 static vector<unsigned> interpretThreadCounts(string_view desc) {
    vector<unsigned> threadCounts;
    auto add = [&](string_view desc) {
-      unsigned c=0;
-      from_chars(desc.data(), desc.data()+desc.length(),c);
+      unsigned c = 0;
+      from_chars(desc.data(), desc.data() + desc.length(), c);
       if (c) threadCounts.push_back(c);
    };
-   while (desc.find(' ')!=string_view::npos) {
+   while (desc.find(' ') != string_view::npos) {
       auto split = desc.find(' ');
-      add(desc.substr(0,split));
-      desc=desc.substr(split+1);
+      add(desc.substr(0, split));
+      desc = desc.substr(split + 1);
    }
    add(desc);
    return threadCounts;
 }
 
-pair<const char*, TestedFunction> tests[] = {{"exceptions", &exceptions}, {"LEAF", &leafResult}, {"herbeceptionemulation", &herbceptionEmulation}};
+vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib>> tests = {{"exceptions", &exceptionsSqrt, &exceptionsFib}, {"LEAF", &leafResultSqrt, &leafResultFib}, {"herbceptionemulation", &herbceptionEmulationSqrt, &herbceptionEmulationFib}};
 
 int main(int argc, char* argv[]) {
    vector<unsigned> threadCounts = buildThreadCounts(thread::hardware_concurrency() / 2); // assuming half are hyperthreads. We can override that below
@@ -118,8 +176,8 @@ int main(int argc, char* argv[]) {
       } else {
          bool found = false;
          for (auto& t : tests)
-            if (t.first == o) {
-               runTests(t.first, t.second, threadCounts);
+            if (get<0>(t) == o) {
+               runTests({t}, threadCounts);
                found = true;
                break;
             }
@@ -131,7 +189,6 @@ int main(int argc, char* argv[]) {
       }
    }
    if (!explicitRun) {
-      for (auto& t : tests)
-         runTests(t.first, t.second, threadCounts);
+      runTests(tests, threadCounts);
    }
 }

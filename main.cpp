@@ -72,12 +72,12 @@ static unsigned doTest(TestedFunctionFib func, unsigned errorRate, unsigned seed
    // Execute the function n times and measure the runtime
    auto start = std::chrono::steady_clock::now();
    constexpr unsigned repeat = 10000;
-   constexpr unsigned depth = 20, expected = 6765;
+   constexpr unsigned depth = 15, expected = 610;
    unsigned result = 0;
    for (unsigned index = 0; index != repeat; ++index) {
       // Cause a failure with a certain probability
       unsigned maxDepth = depth + 1;
-      if ((random() % 1000) < errorRate) maxDepth = depth - 1;
+      if ((random() % 1000) < errorRate) maxDepth = depth - 2;
 
       // Call the function itself
       result += (func(depth, maxDepth) == expected);

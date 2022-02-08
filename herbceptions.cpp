@@ -60,5 +60,5 @@ unsigned herbceptionsFib(unsigned n, unsigned maxDepth) {
 #else
 #warning No herbception implementation provided for this platform, falling back to emulation
 
-unsigned herbceptionsFib(unsigned n, unsigned maxDepth) { return herbceptionEmulation(n, maxDepth); }
+unsigned herbceptionsFib(unsigned n, unsigned maxDepth) { return herbceptionEmulationFib(n, maxDepth); }
 #endif

@@ -1,7 +1,6 @@
 #include <atomic>
 #include <charconv>
 #include <chrono>
-#include <cmath>
 #include <iostream>
 #include <span>
 #include <thread>
@@ -11,6 +10,7 @@ using namespace std;
 
 unsigned exceptions(span<double> values, unsigned repeat);
 unsigned leafResult(span<double> values, unsigned repeat);
+unsigned herbceptionEmulation(span<double> values, unsigned repeat);
 
 using TestedFunction = unsigned (*)(span<double>, unsigned);
 
@@ -70,12 +70,7 @@ static unsigned doTestMultithreaded(TestedFunction func, unsigned errorRate, uns
    return maxDuration.load();
 }
 
-static void runTests(const char* name, TestedFunction func, unsigned maxThreadCount) {
-   unsigned stepSize = max<unsigned>(sqrt(maxThreadCount), 1);
-   vector<unsigned> threadCounts;
-   threadCounts.push_back(1);
-   while (threadCounts.back() < maxThreadCount) threadCounts.push_back(min(threadCounts.back() + stepSize, maxThreadCount));
-
+static void runTests(const char* name, TestedFunction func, span<const unsigned> threadCounts) {
    cout << "testing " << name << " using";
    for (auto c : threadCounts) cout << " " << c;
    cout << " threads" << endl;
@@ -89,21 +84,42 @@ static void runTests(const char* name, TestedFunction func, unsigned maxThreadCo
    }
 }
 
-pair<const char*, TestedFunction> tests[] = {{"exceptions", &exceptions}, {"LEAF", &leafResult}};
+static vector<unsigned> buildThreadCounts(unsigned maxCount) {
+   vector<unsigned> threadCounts{1};
+   while(threadCounts.back() < maxCount) threadCounts.push_back(min(threadCounts.back() * 2, maxCount));
+   return threadCounts;
+}
+
+static vector<unsigned> interpretThreadCounts(string_view desc) {
+   vector<unsigned> threadCounts;
+   auto add = [&](string_view desc) {
+      unsigned c=0;
+      from_chars(desc.data(), desc.data()+desc.length(),c);
+      if (c) threadCounts.push_back(c);
+   };
+   while (desc.find(' ')!=string_view::npos) {
+      auto split = desc.find(' ');
+      add(desc.substr(0,split));
+      desc=desc.substr(split+1);
+   }
+   add(desc);
+   return threadCounts;
+}
+
+pair<const char*, TestedFunction> tests[] = {{"exceptions", &exceptions}, {"LEAF", &leafResult}, {"herbeceptionemulation", &herbceptionEmulation}};
 
 int main(int argc, char* argv[]) {
-   unsigned threadCount = thread::hardware_concurrency() / 2; // assuming half are hyperthreads. We can override that below
+   vector<unsigned> threadCounts = buildThreadCounts(thread::hardware_concurrency() / 2); // assuming half are hyperthreads. We can override that below
    bool explicitRun = false;
    for (int index = 1; index < argc; ++index) {
       string_view o = argv[index];
       if ((o == "--threads") && (index + 1 < argc)) {
-         o = argv[++index];
-         from_chars(o.data(), o.data() + o.length(), threadCount);
+         threadCounts = interpretThreadCounts(argv[++index]);
       } else {
          bool found = false;
          for (auto& t : tests)
             if (t.first == o) {
-               runTests(t.first, t.second, threadCount);
+               runTests(t.first, t.second, threadCounts);
                found = true;
                break;
             }
@@ -116,6 +132,6 @@ int main(int argc, char* argv[]) {
    }
    if (!explicitRun) {
       for (auto& t : tests)
-         runTests(t.first, t.second, threadCount);
+         runTests(t.first, t.second, threadCounts);
    }
 }

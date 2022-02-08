@@ -14,6 +14,8 @@ unsigned leafResultSqrt(span<double> values, unsigned repeat);
 unsigned leafResultFib(unsigned n, unsigned maxDepth);
 unsigned herbceptionEmulationSqrt(span<double> values, unsigned repeat);
 unsigned herbceptionEmulationFib(unsigned n, unsigned maxDepth);
+unsigned herbceptionsSqrt(span<double> values, unsigned repeat);
+unsigned herbceptionsFib(unsigned n, unsigned maxDepth);
 
 using TestedFunctionSqrt = unsigned (*)(span<double>, unsigned);
 using TestedFunctionFib = unsigned (*)(unsigned, unsigned);
@@ -164,7 +166,7 @@ static vector<unsigned> interpretThreadCounts(string_view desc) {
    return threadCounts;
 }
 
-vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib>> tests = {{"exceptions", &exceptionsSqrt, &exceptionsFib}, {"LEAF", &leafResultSqrt, &leafResultFib}, {"herbceptionemulation", &herbceptionEmulationSqrt, &herbceptionEmulationFib}};
+vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib>> tests = {{"exceptions", &exceptionsSqrt, &exceptionsFib}, {"LEAF", &leafResultSqrt, &leafResultFib}, {"herbceptionemulation", &herbceptionEmulationSqrt, &herbceptionEmulationFib}, {"herbceptions", &herbceptionsSqrt, &herbceptionsFib}};
 
 int main(int argc, char* argv[]) {
    vector<unsigned> threadCounts = buildThreadCounts(thread::hardware_concurrency() / 2); // assuming half are hyperthreads. We can override that below

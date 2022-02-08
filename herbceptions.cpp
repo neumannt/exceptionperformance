@@ -62,4 +62,3 @@ unsigned herbceptionsFib(unsigned n, unsigned maxDepth) {
 
 unsigned herbceptionsFib(unsigned n, unsigned maxDepth) { return herbceptionEmulation(n, maxDepth); }
 #endif
-

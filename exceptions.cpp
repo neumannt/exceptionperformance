@@ -20,7 +20,7 @@ unsigned exceptionsSqrt(std::span<double> values, unsigned repeat) {
    return failures;
 }
 
- // prevent the compile from recognizing and compiling away the fib logic
+// prevent the compile from recognizing and compiling away the fib logic
 static unsigned doFib(unsigned n, unsigned maxDepth) __attribute((noinline, optimize("-O1")));
 
 static unsigned doFib(unsigned n, unsigned maxDepth) {

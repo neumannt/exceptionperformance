@@ -4,7 +4,7 @@
 
 struct InvalidValue {};
 
-static tbv::result<void> doSqrt(std::span<double> values) {
+static tbv::result<void> doSqrt(std::span<double> values) noexcept {
    for (auto& v : values) {
       if (v < 0) return tbv::throw_value(std::make_error_code(std::errc::argument_out_of_domain));
       v = sqrt(v);
@@ -12,7 +12,7 @@ static tbv::result<void> doSqrt(std::span<double> values) {
    return {};
 }
 
-unsigned herbceptionEmulationSqrt(std::span<double> values, unsigned repeat) {
+unsigned herbceptionEmulationSqrt(std::span<double> values, unsigned repeat) noexcept {
    unsigned failures = 0;
    for (unsigned index = 0; index != repeat; ++index) {
       if (doSqrt(values).has_error()) ++failures;
@@ -20,13 +20,13 @@ unsigned herbceptionEmulationSqrt(std::span<double> values, unsigned repeat) {
    return failures;
 }
 
-static tbv::result<unsigned> doFib(unsigned n, unsigned maxDepth) {
+static tbv::result<unsigned> doFib(unsigned n, unsigned maxDepth) noexcept {
    if (!maxDepth) return tbv::throw_value(std::make_error_code(std::errc::argument_out_of_domain));
    if (n <= 2) return 1;
    return TRY(doFib(n - 2, maxDepth - 1)) + TRY(doFib(n - 1, maxDepth - 1));
 }
 
-unsigned herbceptionEmulationFib(unsigned n, unsigned maxDepth) {
+unsigned herbceptionEmulationFib(unsigned n, unsigned maxDepth) noexcept {
    auto v = doFib(n, maxDepth);
    return v.has_error() ? 0 : v.value();
 }

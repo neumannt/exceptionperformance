@@ -10,14 +10,14 @@ using namespace std;
 
 unsigned exceptionsSqrt(span<double> values, unsigned repeat);
 unsigned exceptionsFib(unsigned n, unsigned maxDepth);
-unsigned leafResultSqrt(span<double> values, unsigned repeat);
-unsigned leafResultFib(unsigned n, unsigned maxDepth);
-unsigned expectedSqrt(span<double> values, unsigned repeat);
-unsigned expectedFib(unsigned n, unsigned maxDepth);
-unsigned herbceptionEmulationSqrt(span<double> values, unsigned repeat);
-unsigned herbceptionEmulationFib(unsigned n, unsigned maxDepth);
-unsigned herbceptionsSqrt(span<double> values, unsigned repeat);
-unsigned herbceptionsFib(unsigned n, unsigned maxDepth);
+unsigned leafResultSqrt(span<double> values, unsigned repeat) noexcept;
+unsigned leafResultFib(unsigned n, unsigned maxDepth) noexcept;
+unsigned expectedSqrt(span<double> values, unsigned repeat) noexcept;
+unsigned expectedFib(unsigned n, unsigned maxDepth) noexcept;
+unsigned herbceptionEmulationSqrt(span<double> values, unsigned repeat) noexcept;
+unsigned herbceptionEmulationFib(unsigned n, unsigned maxDepth) noexcept;
+unsigned herbceptionsSqrt(span<double> values, unsigned repeat) noexcept;
+unsigned herbceptionsFib(unsigned n, unsigned maxDepth) noexcept;
 
 using TestedFunctionSqrt = unsigned (*)(span<double>, unsigned);
 using TestedFunctionFib = unsigned (*)(unsigned, unsigned);

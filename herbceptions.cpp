@@ -2,10 +2,10 @@
 #include <cmath>
 #include <span>
 
-unsigned herbceptionEmulationSqrt(std::span<double> values, unsigned repeat);
-unsigned herbceptionEmulationFib(unsigned n, unsigned maxDepth);
+unsigned herbceptionEmulationSqrt(std::span<double> values, unsigned repeat) noexcept;
+unsigned herbceptionEmulationFib(unsigned n, unsigned maxDepth) noexcept;
 
-unsigned herbceptionsSqrt(std::span<double> values, unsigned repeat) {
+unsigned herbceptionsSqrt(std::span<double> values, unsigned repeat) noexcept {
    // The emulation is good enough here, the call overhead is negligible
    return herbceptionEmulationSqrt(values, repeat);
 }
@@ -53,7 +53,7 @@ static unsigned doFib(unsigned /*n*/, unsigned /*maxDepth*/) {
    )");
 }
 
-unsigned herbceptionsFib(unsigned n, unsigned maxDepth) {
+unsigned herbceptionsFib(unsigned n, unsigned maxDepth) noexcept {
    return doFib(n, maxDepth);
 }
 

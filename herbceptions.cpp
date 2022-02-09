@@ -30,19 +30,14 @@ static unsigned doFib(unsigned /*n*/, unsigned /*maxDepth*/) {
         decl    %ebx
         movl    %ebx, %esi
         callq   .LBfib
-        jc      .LBB0_4
+        jc      .LBB0_5
         movl    %eax, %ebp
         decl    %r14d
         movl    %r14d, %edi
         movl    %ebx, %esi
         callq   .LBfib
-        jc      .LBB0_4
+        jc      .LBB0_5
         addl    %ebp, %eax
-        jmp     .LBB0_4
-.LBB0_1:
-	xor     %eax, %eax
-        stc
-        jmp     .LBB0_5
 .LBB0_4:
         clc
 .LBB0_5:
@@ -50,6 +45,10 @@ static unsigned doFib(unsigned /*n*/, unsigned /*maxDepth*/) {
         popq    %r14
         popq    %rbp
         retq
+.LBB0_1:
+        xor     %eax, %eax
+        stc
+        jmp .LBB0_5
    )");
 }
 

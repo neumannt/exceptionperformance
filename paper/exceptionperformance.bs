@@ -109,14 +109,14 @@ Traditional C++ exceptions have two main problems:
 1) the exceptions are allocated in dynamic memory because of inheritance and because of non-local constructs like
 std::current_exception. This prevents basic optimizations like transforming a throw into a goto, because other
 parts of the program should be able to see that dynamically allocated exception object. And it causes problems
-with throwing exception in out-of-memory situations.
+with throwing exceptions in out-of-memory situations.
 
-2) exception unwinding is effectively single-threaded, because the table driven unwinder logic using by modern
+2) exception unwinding is effectively single-threaded, because the table driven unwinder logic used by modern
 C++ compilers grabs a global mutex to protect the tables from concurrent changes. This has disastrous consequences
 for high core counts and makes exceptions nearly unusable on such machines.
 
 The first problem seems unfixable without language changes, there are many constructs like "throw;" or
-current_exception that rely upon that mechanism. Note that these can occur in any part of the problem,
+current_exception that rely upon that mechanism. Note that these can occur in any part of the program,
 in particular in any function that is called by a catch block that is not inlined, thus we usually cannot
 simply elide the object construction.
 The second problem could potentially be fixed by
@@ -148,7 +148,7 @@ runtime overhead for fib:
     <tr><td>fib</td><td>49ms</td><td>49ms</td><td>49ms</td><td>49ms</td></tr>
 </table>
 
-Single threaded the fib code using std::expected is more than four time slower than using
+Single threaded the fib code using std::expected is more than four times slower than using
 traditional exceptions. Of course the overhead is less when the function itself is more expensive,
 as in the sqrt scenario. Nevertheless the overhead is so high that std::expected is not a
 good general purpose replacement for traditional exceptions.
@@ -157,7 +157,7 @@ boost::LEAF {#leaf}
 -------------------
 
 Instead of passing potentially complex error objects around, the catch-by-value proposal [[P2232R0]]
-suggests that it much more efficient catch objects by value instead of by reference. When
+suggests that it is much more efficient to catch objects by value instead of by reference. When
 catching by value, the throw location can identify the accepting catch, and then directly place the
 error object into a stack memory provided by the try/catch block. The error itself can be propagated
 as a single bit. When using the boost::LEAF implementation of such a scheme we get the following
@@ -166,22 +166,22 @@ performance numbers:
 <table>
     <thead><tr><td>failure rate</td><td>0.0%</td><td>0.1%</td><td>1.0%</td><td>10%</td></thead>
     <tr><td>sqrt</td><td>18ms</td><td>18ms</td><td>18ms</td><td>16ms</td></tr>
-    <tr><td>fib</td><td>25ms</td><td>24ms</td><td>24ms</td><td>24ms</td></tr>
+    <tr><td>fib</td><td>24ms</td><td>24ms</td><td>24ms</td><td>24ms</td></tr>
 </table>
 
 This has much less overhead than std::expected, but it is still not for free. We see a slowdown of
-a factor of two compared to traditional exception, which is still problematic.
+a factor of two compared to traditional exceptions, which is still problematic.
 
 Note that LEAF profits significantly from using -fno-exceptions here. When enabling exceptions the
-fib case needs 29ms, even though not a single exception is thrown. Which illustrates that exceptions
-are not truly zero overhead, they cause overhead by pessimizing other code.
+fib case needs 29ms, even though not a single exception is thrown, which illustrates that exceptions
+are not truly zero overhead. They cause overhead by pessimizing other code.
 
 throwing values {#herbceptions}
 -------------------------------
 
 The throwing values proposal [[P0709R4]] (also known as "Herbceptions") suggests that we do not allow
 for arbitrary exceptions to be thrown, but instead use a specific exception class which can be
-passes efficiently using two register values. The exception indicator itself is passed using a
+passed efficiently using two register values. The exception indicator itself is passed using a
 CPU flag when returning from a function. This is a clever idea that we unfortunately cannot
 implement in pure C++ due to lack of control over the CPU flags. We have thus tested two alternatives,
 one pure C++ approximation, where the non-exceptional result value must be at most pointer
@@ -236,7 +236,7 @@ the standard library. The mechanism will be opt-in in the sense that we have to 
 get the throwing-values mechanism, but that is fine. The question is how can we get compatibility on the
 source level? Switching mechanisms based upon compiler flags seems dangerous with regards to the ODR,
 and switching from, e.g., std:: to std2:: would be a very invasive change. It is not clear yet what the
-best strategy would be. But something has to be done, as otherwise more and more people will be force
+best strategy would be. But something has to be done, as otherwise more and more people will be forced
 to use -fno-exceptions and switch to home grown solutions to avoid the performance problems on modern
 machines.
 

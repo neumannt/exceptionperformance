@@ -20,6 +20,7 @@ unsigned herbceptionEmulationSqrt(std::span<double> values, unsigned repeat) noe
    return failures;
 }
 
+static tbv::result<unsigned> doFib(unsigned n, unsigned maxDepth) noexcept __attribute((noinline, optimize("no-optimize-sibling-calls")));
 static tbv::result<unsigned> doFib(unsigned n, unsigned maxDepth) noexcept {
    if (!maxDepth) return tbv::throw_value(std::make_error_code(std::errc::argument_out_of_domain));
    if (n <= 2) return 1;

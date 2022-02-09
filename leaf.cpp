@@ -27,6 +27,7 @@ unsigned leafResultSqrt(std::span<double> values, unsigned repeat) noexcept {
    return failures;
 }
 
+static leaf::result<unsigned> doFib(unsigned n, unsigned maxDepth) noexcept __attribute((noinline, optimize("no-optimize-sibling-calls")));
 static leaf::result<unsigned> doFib(unsigned n, unsigned maxDepth) noexcept {
    if (!maxDepth) return leaf::new_error(InvalidValue{});
    if (n <= 2) return 1;

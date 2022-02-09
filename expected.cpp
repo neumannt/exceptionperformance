@@ -22,6 +22,7 @@ unsigned expectedSqrt(std::span<double> values, unsigned repeat) {
    return failures;
 }
 
+static expected<unsigned, InvalidValue> doFib(unsigned n, unsigned maxDepth) __attribute((noinline, optimize("no-optimize-sibling-calls")));
 static expected<unsigned, InvalidValue> doFib(unsigned n, unsigned maxDepth) {
    if (!maxDepth) return unexpected<InvalidValue>(InvalidValue{});
    if (n <= 2) return 1;

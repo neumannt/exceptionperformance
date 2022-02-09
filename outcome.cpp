@@ -28,6 +28,7 @@ unsigned outcomeResultSqrt(std::span<double> values, unsigned repeat) noexcept {
     return failures;
 }
 
+static result<unsigned> doFib(unsigned n, unsigned maxDepth) noexcept __attribute((noinline, optimize("no-optimize-sibling-calls")));
 static result<unsigned> doFib(unsigned n, unsigned maxDepth) noexcept {
     if (!maxDepth) return ErrorCode::InvalidValue;
     if (n <= 2) return 1;

@@ -18,6 +18,8 @@ unsigned herbceptionEmulationSqrt(span<double> values, unsigned repeat) noexcept
 unsigned herbceptionEmulationFib(unsigned n, unsigned maxDepth) noexcept;
 unsigned herbceptionsSqrt(span<double> values, unsigned repeat) noexcept;
 unsigned herbceptionsFib(unsigned n, unsigned maxDepth) noexcept;
+unsigned outcomeResultSqrt(span<double> values, unsigned repeat) noexcept;
+unsigned outcomeResultFib(unsigned n, unsigned maxDepth) noexcept;
 
 using TestedFunctionSqrt = unsigned (*)(span<double>, unsigned);
 using TestedFunctionFib = unsigned (*)(unsigned, unsigned);
@@ -168,7 +170,7 @@ static vector<unsigned> interpretThreadCounts(string_view desc) {
    return threadCounts;
 }
 
-vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib>> tests = {{"exceptions", &exceptionsSqrt, &exceptionsFib}, {"LEAF", &leafResultSqrt, &leafResultFib}, {"std::expected", &expectedSqrt, &expectedFib}, {"herbceptionemulation", &herbceptionEmulationSqrt, &herbceptionEmulationFib}, {"herbceptions", &herbceptionsSqrt, &herbceptionsFib}};
+vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib>> tests = {{"exceptions", &exceptionsSqrt, &exceptionsFib}, {"LEAF", &leafResultSqrt, &leafResultFib}, {"std::expected", &expectedSqrt, &expectedFib}, {"herbceptionemulation", &herbceptionEmulationSqrt, &herbceptionEmulationFib}, {"herbceptions", &herbceptionsSqrt, &herbceptionsFib},  {"outcome", &outcomeResultSqrt, &outcomeResultFib}};
 
 int main(int argc, char* argv[]) {
    vector<unsigned> threadCounts = buildThreadCounts(thread::hardware_concurrency() / 2); // assuming half are hyperthreads. We can override that below

@@ -145,7 +145,7 @@ runtime overhead for fib:
 <table>
     <thead><tr><td>failure rate</td><td>0.0%</td><td>0.1%</td><td>1.0%</td><td>10%</td></thead>
     <tr><td>sqrt</td><td>18ms</td><td>18ms</td><td>18ms</td><td>16ms</td></tr>
-    <tr><td>fib</td><td>49ms</td><td>49ms</td><td>49ms</td><td>49ms</td></tr>
+    <tr><td>fib</td><td>63ms</td><td>63ms</td><td>63ms</td><td>63ms</td></tr>
 </table>
 
 Single threaded the fib code using std::expected is more than four times slower than using
@@ -166,7 +166,7 @@ performance numbers:
 <table>
     <thead><tr><td>failure rate</td><td>0.0%</td><td>0.1%</td><td>1.0%</td><td>10%</td></thead>
     <tr><td>sqrt</td><td>18ms</td><td>18ms</td><td>18ms</td><td>16ms</td></tr>
-    <tr><td>fib</td><td>24ms</td><td>24ms</td><td>24ms</td><td>24ms</td></tr>
+    <tr><td>fib</td><td>25ms</td><td>25ms</td><td>25ms</td><td>25ms</td></tr>
 </table>
 
 This has much less overhead than std::expected, but it is still not for free. We see a slowdown of
@@ -192,10 +192,10 @@ inline assembler. The performance number are:
     <thead><tr><td>failure rate</td><td>0.0%</td><td>0.1%</td><td>1.0%</td><td>10%</td></thead>
     <tr><td>C++ emulation</td></tr>
     <tr><td>sqrt</td><td>18ms</td><td>18ms</td><td>18ms</td><td>16ms</td></tr>
-    <tr><td>fib</td><td>16ms</td><td>16ms</td><td>16ms</td><td>16ms</td></tr>
+    <tr><td>fib</td><td>19ms</td><td>18ms</td><td>18ms</td><td>18ms</td></tr>
     <tr><td>assembler</td></tr>
     <tr><td>sqrt</td><td>18ms</td><td>18ms</td><td>18ms</td><td>16ms</td></tr>
-    <tr><td>fib</td><td>13ms</td><td>15ms</td><td>15ms</td><td>15ms</td></tr>
+    <tr><td>fib</td><td>13ms</td><td>13ms</td><td>13ms</td><td>13ms</td></tr>
 </table>
 
 This is close to being an acceptable substitute to traditional C++ exceptions. There is still

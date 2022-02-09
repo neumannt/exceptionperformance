@@ -9,4 +9,8 @@ bin/%.o: %.cpp
 bin/runtests: bin/main.o bin/exceptions.o bin/leaf.o bin/expected.o bin/herbceptionemulation.o bin/herbceptions.o
 	$(CXX) -o$@ $^
 
-CXXFLAGS-bin/leaf:=-w
+CXXFLAGS-bin/leaf:=-w -fno-exceptions -BOOST_LEAF_CFG_DIAGNOSTICS=0
+CXXFLAGS-bin/herbceptionemulation:=-fno-exceptions
+CXXFLAGS-bin/herbceptions:=-fno-exceptions
+
+

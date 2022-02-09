@@ -134,8 +134,8 @@ The main problem most of the alternatives have is that while they handle the sqr
 significant performance overhead for the fib scenario. Which makes it difficult to simply replace
 traditional exceptions.
 
-std::expected
--------------
+std::expected {#expected}
+-------------------------
 
 The std:expected proposal [[P0323R11]] introduces a variant type that either holds a value or
 an error object, which can be used to propagate the error state as a return value instead of
@@ -153,8 +153,8 @@ traditional exceptions. Of course the overhead is less when the function itself 
 as in the sqrt scenario. Nevertheless the overhead is so high that std::expected is not a
 good general purpose replacement for traditional exceptions.
 
-boost::LEAF
------------
+boost::LEAF {#leaf}
+-------------------
 
 Instead of passing potentially complex error objects around, the catch-by-value proposal [[P2232R0]]
 suggests that it much more efficient catch objects by value instead of by reference. When
@@ -176,8 +176,8 @@ Note that LEAF profits significantly from using -fno-exceptions here. When enabl
 fib case needs 29ms, even though not a single exception is thrown. Which illustrates that exceptions
 are not truly zero overhead, they cause overhead by pessimizing other code.
 
-throwing values
----------------
+throwing values {#herbceptions}
+-------------------------------
 
 The throwing values proposal [[P0709R4]] (also known as "Herbceptions") suggests that we do not allow
 for arbitrary exceptions to be thrown, but instead use a specific exception class which can be
@@ -203,8 +203,8 @@ some slowdown on the happy path, when no exception occurs, but that overhead is 
 ca. 25% when using C++ and ca. 10% when using assembler in a scenario where we do nearly nothing excepting calling other functions. It
 overtakes traditional exceptions if failure rates are higher. And it is dramatically better in multi-threaded applications.
 
-lock-free unwinding
--------------------
+lock-free unwinding {#lockfreeunwinding}
+----------------------------------------
 
 Even though none of the leading C++ compilers does so, it is in fact possible to implement contention
 free exception unwinding. We did a prototype implementation where we changed the gcc exception logic

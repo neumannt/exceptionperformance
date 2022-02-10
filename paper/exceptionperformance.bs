@@ -1,16 +1,16 @@
 <pre class='metadata'>
 Title: C++ exceptions are becoming more and more problematic
-Shortname: P????
+Shortname: D2544
 Revision: 0
 Audience: EWG
 Status: D
 Group: WG21
-!URL: https://wg21.link/P????/0
+!URL: https://wg21.link/D2544/0
 !Source: <a href="https://github.com/neumannt/exceptionperformance/blob/master/paper/exceptionperformance.bs">https://github.com/neumannt/exceptionperformance/blob/master/paper/exceptionperformance.bs</a>
 Editor: Thomas Neumann, TUM, thomas.neumann@in.tum.de
 !Date: 2022-02-07
 Markup Shorthands: markdown yes
-Abstract: Current hardware trends make C++ exceptions harder and harder to justify. This paper illustrates and quantifies the problem and discusses potential future direction to fix exceptions.
+Abstract: Current hardware trends make C++ exceptions harder and harder to justify. This paper illustrates and quantifies the problem and discusses potential future directions to fix exceptions.
 </pre>
 
 Introduction {#intro}
@@ -49,7 +49,7 @@ execution numbers (in milliseconds) for the whole workload, depending on the thr
     <tr><td>10% failure</td> <td>23ms</td><td>34ms</td><td>59ms</td><td>168ms</td><td>247ms</td></tr>
 </table>
 
-In the first column we see that runtime increases with higher failure rates, but that is increase is
+In the first column we see that runtime increases with higher failure rates, but that increase is
 modest and to be expected. After all, exceptions are for "exceptional" situations, and thus 10% failure
 rate is already quite high. When we look at the last column with 12 threads the increase happens much earlier,
 though, already at 1% failure the execution time has grown significantly, and at 10% the overhead is unacceptable.
@@ -69,9 +69,9 @@ on a dual socket AMD EPYC 7713 with 128 cores and 256 execution contexts we get 
 </table>
 
 There, we start to get performance problems already at 0.1% failure rate, and the system becomes unusable at 1% failure rate or more.
-This makes it hard to justify using exceptions in C++, its performance is hard to predict and it degrades badly under high concurrency.
+This makes it hard to justify using exceptions in C++, their performance is hard to predict and they degrade badly under high concurrency.
 
-On the other hand, and in contrast to most of the alternatives discussed below, the traditional C++ exceptions do have the advantage
+On the other hand, and in contrast to most of the alternatives discussed below, traditional C++ exceptions do have the advantage
 that they have (nearly) zero overhead compared to no error checking at all as long as no exception occurs. We can measure that with an code fragment that performs a very high number
 of function invocations and little extra work per call:
 
@@ -86,7 +86,7 @@ unsigned do_fib(unsigned n, unsigned max_depth) {
 </xmp>
 
 On the Ryzen we get as execution time for 10'000 invocations with n = 15 (and a certain probability of
-max_depth beeing 13, which triggers an exception):
+max_depth being 13, which triggers an exception):
 
 <table>
     <thead><tr><td>Threads</td><td>1</td><td>2</td><td>4</td><td>8</td><td>12</td></tr></thead>
@@ -99,7 +99,7 @@ max_depth beeing 13, which triggers an exception):
 When using C++ exceptions the results are similar to the sqrt scenario from above.
 We include them here because for the alternatives that we discuss below the fib scenario is the
 worst case, and significantly more expensive than the sqrt scenario.
-And again we have the problem that performance degrades with increased concurrency.
+And again we have the problem that performance degrades with increasing concurrency.
 
 Root cause {#problems}
 ======================
@@ -121,7 +121,7 @@ in particular in any function that is called by a catch block that is not inline
 simply elide the object construction.
 The second problem could potentially be fixed by
 a sophisticated implementation, but that would definitively be an ABI break and it would require
-careful coordination by all components involved, including shared libraries.
+careful coordination of all components involved, including shared libraries.
 
 Alternatives {#alternatives}
 ============================
@@ -159,7 +159,7 @@ boost::LEAF {#leaf}
 Instead of passing potentially complex error objects around, the catch-by-value proposal [[P2232R0]]
 suggests that it is much more efficient to catch objects by value instead of by reference. When
 catching by value, the throw location can identify the accepting catch, and then directly place the
-error object into a stack memory provided by the try/catch block. The error itself can be propagated
+error object into stack memory provided by the try/catch block. The error itself can be propagated
 as a single bit. When using the boost::LEAF implementation of such a scheme we get the following
 performance numbers:
 
@@ -170,7 +170,7 @@ performance numbers:
 </table>
 
 This has much less overhead than std::expected, but it is still not for free. For fib we see a slowdown of
-ca. 70% compared to traditional exceptions, which is still problematic.
+approx. 70% compared to traditional exceptions, which is still problematic.
 
 Note that LEAF profits significantly from using -fno-exceptions here. When enabling exceptions the
 fib case needs 29ms, even though not a single exception is thrown, which illustrates that exceptions
@@ -200,7 +200,7 @@ inline assembler. The performance number are:
 
 This is close to being an acceptable substitute to traditional C++ exceptions. There is still
 some slowdown on the happy path, when no exception occurs, but that overhead is small,
-ca. 25% when using C++ and ca. 10% when using assembler, in a scenario where we do nearly nothing excepting calling other functions. It
+approx. 25% when using C++ and approx. 10% when using assembler, in a scenario where we do nearly nothing except calling other functions. It
 overtakes traditional exceptions if failure rates are higher. And it is dramatically better in multi-threaded applications.
 
 fixing traditional exceptions {#traditional}
@@ -214,7 +214,7 @@ long as there are no concurrent shared library operations. Shared library open/c
 but that should be rare. With such a data structure we can unwind in parallel, and we get
 a multi-threaded performance that is nearly identical to the single-threaded case, both on 12 and on 128 cores.
 
-That sounds like an ideal solution, but in practice this is hard to introduce. In breaks the existing ABI,
+That sounds like an ideal solution, but in practice this is hard to introduce. It breaks the existing ABI,
 and all shared libraries would have to be compiled with the new model, as otherwise unwinding breaks. In a way
 the other alternative mechanisms break the ABI, too, but there the breakage is local to the code that uses
 the new mechanisms. Changing the traditional unwinding mechanism requires coordination across all code artifacts
@@ -236,7 +236,7 @@ struct ex {};
 int x;
 try {
    if (y<0) throw ex{};
-   x = 1;
+   x=1;
 } catch (const ex&) {
    foo();
    x=2;
@@ -245,7 +245,7 @@ try {
 =>
 
 int x;
-if (x<0) { foo(); x=2; } else x=1;
+if (y<0) { foo(); x=2; } else x=1;
 </xmp>
 
 But we cannot, as the function foo() might contain surprises like this:
@@ -275,7 +275,7 @@ use?
 Throwing values [[P0709R4]] seems quite attractive, as it is one of the fastest approaches, is lock free,
 allows for transforming throw into goto, and does not require global coordination across all libraries.
 What is missing, however, is a way to integrate that mechanism into the existing language, in particular
-the standard library. The mechanism will be opt-in in the sense that we have to recompile to source code
+the standard library. The mechanism will be opt-in in the sense that we have to recompile the source code to
 get the throwing-values mechanism, but that is fine. The question is how can we get compatibility on the
 source level? Switching mechanisms based upon compiler flags seems dangerous with regards to the ODR,
 and switching from, e.g., std:: to std2:: would be a very invasive change. It is not clear yet what the

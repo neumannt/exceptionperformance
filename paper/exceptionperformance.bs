@@ -203,8 +203,8 @@ some slowdown on the happy path, when no exception occurs, but that overhead is 
 ca. 25% when using C++ and ca. 10% when using assembler in a scenario where we do nearly nothing excepting calling other functions. It
 overtakes traditional exceptions if failure rates are higher. And it is dramatically better in multi-threaded applications.
 
-lock-free unwinding {#lockfreeunwinding}
-----------------------------------------
+fixing traditional exceptions {#traditional}
+--------------------------------------------
 
 Even though none of the leading C++ compilers does so, it is in fact possible to implement contention
 free exception unwinding. We did a prototype implementation where we changed the gcc exception logic
@@ -220,7 +220,50 @@ the other alternative mechanisms break the ABI, too, but there the breakage is l
 the new mechanisms. Changing the traditional unwinding mechanism requires coordination across all code artifacts
 that are linked together. This would only happen if the C++ standard mandates that unwinding has to be contention
 free, and even then the introduction of the new ABI would be difficult.
-And the allocation problem remains, the sad path would still be quite a bit slower than the happy path.
+
+A less radical change would be to change the global mutex into an rwlock, but unfortunately that is
+easily not possible either. Unwinding is not a pure library function but a back and forth between
+the unwinder and application/compiler code, and existing code relies upon the fact that it is protected
+by a global lock. In libgcc the callback from dl_iterate_phdr manipulates shared state, and switching
+to an rwlock leads to data races. Of course it would make sense to change that, but that would be an ABI break, too.
+
+And fundamentally the current exception design is suboptimal for efficient implementations. For example we would
+like to be able to do the following transformation:
+
+<xmp>
+struct ex {};
+...
+int x;
+try {
+   if (y<0) throw ex{};
+   x = 1;
+} catch (const ex&) {
+   foo();
+   x=2;
+}
+
+=>
+
+int x;
+if (x<0) { foo(); x=2; } else x=1;
+</xmp>
+
+But we cannot, as the function foo() might contain surprises like this:
+
+<xmp>
+void foo() {
+   if (random() < 10) some_global = std::current_exception();
+   if (random() < 100) throw;
+}
+</xmp>
+
+This forces exceptions to be globally available at all time and prevents more efficient
+implementations. And we saw these limitations in practice: Even with fully lock-free unwinding,
+we encountered scalability issues with very high threads counts and error rates (256 threads, 10% failure).
+These were far less severe than with current single-threaded unwinding, but nevertheless
+it clear that the other parts of the traditional exception handling do not scale either due to global state.
+Which is a strong argument for preferring an exception mechanism that uses only local state.
+
 
 Moving Forward {#thefuture}
 ===========================
@@ -240,6 +283,10 @@ best strategy would be. But something has to be done, as otherwise more and more
 to use -fno-exceptions and switch to home grown solutions to avoid the performance problems on modern
 machines.
 
+Acknowledgments {#acknowledgments}
+==================================
+
+- Thanks to Emil Dotchevski and Peter Dimov for their feedback
 
 
 <pre class=biblio>

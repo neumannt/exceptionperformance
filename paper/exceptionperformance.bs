@@ -169,8 +169,8 @@ performance numbers:
     <tr><td>fib</td><td>25ms</td><td>25ms</td><td>25ms</td><td>25ms</td></tr>
 </table>
 
-This has much less overhead than std::expected, but it is still not for free. We see a slowdown of
-a factor of two compared to traditional exceptions, which is still problematic.
+This has much less overhead than std::expected, but it is still not for free. For fib we see a slowdown of
+ca. 70% compared to traditional exceptions, which is still problematic.
 
 Note that LEAF profits significantly from using -fno-exceptions here. When enabling exceptions the
 fib case needs 29ms, even though not a single exception is thrown, which illustrates that exceptions
@@ -200,7 +200,7 @@ inline assembler. The performance number are:
 
 This is close to being an acceptable substitute to traditional C++ exceptions. There is still
 some slowdown on the happy path, when no exception occurs, but that overhead is small,
-ca. 25% when using C++ and ca. 10% when using assembler in a scenario where we do nearly nothing excepting calling other functions. It
+ca. 25% when using C++ and ca. 10% when using assembler, in a scenario where we do nearly nothing excepting calling other functions. It
 overtakes traditional exceptions if failure rates are higher. And it is dramatically better in multi-threaded applications.
 
 fixing traditional exceptions {#traditional}
@@ -222,7 +222,7 @@ that are linked together. This would only happen if the C++ standard mandates th
 free, and even then the introduction of the new ABI would be difficult.
 
 A less radical change would be to change the global mutex into an rwlock, but unfortunately that is
-easily not possible either. Unwinding is not a pure library function but a back and forth between
+not easily possible either. Unwinding is not a pure library function but a back and forth between
 the unwinder and application/compiler code, and existing code relies upon the fact that it is protected
 by a global lock. In libgcc the callback from dl_iterate_phdr manipulates shared state, and switching
 to an rwlock leads to data races. Of course it would make sense to change that, but that would be an ABI break, too.
@@ -259,9 +259,9 @@ void foo() {
 
 This forces exceptions to be globally available at all time and prevents more efficient
 implementations. And we saw these limitations in practice: Even with fully lock-free unwinding,
-we encountered scalability issues with very high threads counts and error rates (256 threads, 10% failure).
+we encountered some scalability issues with very high threads counts and high error rates (256 threads, 10% failure).
 These were far less severe than with current single-threaded unwinding, but nevertheless
-it clear that the other parts of the traditional exception handling do not scale either due to global state.
+it is clear that the other parts of traditional exception handling do not scale either due to global state.
 Which is a strong argument for preferring an exception mechanism that uses only local state.
 
 

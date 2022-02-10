@@ -8,6 +8,8 @@
 
 using namespace std;
 
+unsigned baselineSqrt(span<double> values, unsigned repeat);
+unsigned baselineFib(unsigned n, unsigned maxDepth);
 unsigned exceptionsSqrt(span<double> values, unsigned repeat);
 unsigned exceptionsFib(unsigned n, unsigned maxDepth);
 unsigned leafResultSqrt(span<double> values, unsigned repeat) noexcept;
@@ -112,7 +114,7 @@ static unsigned doTestMultithreaded(T func, unsigned errorRate, unsigned threadC
    return maxDuration.load();
 }
 
-static void runTests(const vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib>>& tests, span<const unsigned> threadCounts) {
+static void runTests(const vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib, bool>>& tests, span<const unsigned> threadCounts) {
    auto announce = [threadCounts](const char* name) {
       cout << "testing " << name << " using";
       for (auto c : threadCounts) cout << " " << c;
@@ -130,6 +132,8 @@ static void runTests(const vector<tuple<const char*, TestedFunctionSqrt, TestedF
          for (auto tc : threadCounts)
             cout << " " << doTestMultithreaded([func = get<1>(t)](unsigned errorRate, unsigned id) { return doTest(func, errorRate, id); }, fr, tc);
          cout << endl;
+         if (!get<3>(t))
+            break;
       }
    }
    cout << endl;
@@ -143,6 +147,8 @@ static void runTests(const vector<tuple<const char*, TestedFunctionSqrt, TestedF
          for (auto tc : threadCounts)
             cout << " " << doTestMultithreaded([func = get<2>(t)](unsigned errorRate, unsigned id) { return doTest(func, errorRate, id); }, fr, tc);
          cout << endl;
+         if (!get<3>(t))
+            break;
       }
    }
    cout << endl;
@@ -170,7 +176,7 @@ static vector<unsigned> interpretThreadCounts(string_view desc) {
    return threadCounts;
 }
 
-vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib>> tests = {{"exceptions", &exceptionsSqrt, &exceptionsFib}, {"LEAF", &leafResultSqrt, &leafResultFib}, {"std::expected", &expectedSqrt, &expectedFib}, {"herbceptionemulation", &herbceptionEmulationSqrt, &herbceptionEmulationFib}, {"herbceptions", &herbceptionsSqrt, &herbceptionsFib},  {"outcome", &outcomeResultSqrt, &outcomeResultFib}};
+vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib, bool>> tests = {{"baseline", &baselineSqrt, &baselineFib, false}, {"exceptions", &exceptionsSqrt, &exceptionsFib, true}, {"LEAF", &leafResultSqrt, &leafResultFib, true}, {"std::expected", &expectedSqrt, &expectedFib, true}, {"herbceptionemulation", &herbceptionEmulationSqrt, &herbceptionEmulationFib, true}, {"herbceptions", &herbceptionsSqrt, &herbceptionsFib, true}, {"outcome", &outcomeResultSqrt, &outcomeResultFib, true}};
 
 int main(int argc, char* argv[]) {
    vector<unsigned> threadCounts = buildThreadCounts(thread::hardware_concurrency() / 2); // assuming half are hyperthreads. We can override that below

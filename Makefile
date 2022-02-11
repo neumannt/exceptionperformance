@@ -17,7 +17,7 @@ bin/benchmark/src/libbenchmark.a:
 bin/runtests_googlebench: bin/main_googlebench.o bin/exceptions.o bin/leaf.o bin/expected.o bin/herbceptionemulation.o bin/herbceptions.o bin/outcome.o bin/baseline.o bin/benchmark/src/libbenchmark.a
 	$(CXX) -o$@ $^ $(LDFLAGS-$(basename $@))
 
-CXXFLAGS-bin/leaf:=-w -fno-exceptions -BOOST_LEAF_CFG_DIAGNOSTICS=0
+CXXFLAGS-bin/leaf:=-w -fno-exceptions -O2 -DNDEBUG -DBOOST_LEAF_CFG_DIAGNOSTICS=0 -DBOOST_LEAF_CFG_CAPTURE=0
 CXXFLAGS-bin/herbceptionemulation:=-fno-exceptions
 CXXFLAGS-bin/herbceptions:=-fno-exceptions
 CXXFLAGS-bin/outcome:=-fno-exceptions

@@ -166,11 +166,11 @@ performance numbers:
 <table>
     <thead><tr><td>failure rate</td><td>0.0%</td><td>0.1%</td><td>1.0%</td><td>10%</td></thead>
     <tr><td>sqrt</td><td>18ms</td><td>18ms</td><td>18ms</td><td>16ms</td></tr>
-    <tr><td>fib</td><td>25ms</td><td>25ms</td><td>25ms</td><td>25ms</td></tr>
+    <tr><td>fib</td><td>23ms</td><td>22ms</td><td>22ms</td><td>22ms</td></tr>
 </table>
 
 This has much less overhead than std::expected, but it is still not for free. For fib we see a slowdown of
-approx. 70% compared to traditional exceptions, which is still problematic.
+approx. 60% compared to traditional exceptions, which is still problematic.
 
 Note that LEAF profits significantly from using -fno-exceptions here. When enabling exceptions the
 fib case needs 29ms, even though not a single exception is thrown, which illustrates that exceptions

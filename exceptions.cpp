@@ -3,6 +3,7 @@
 
 struct InvalidValue {};
 
+static void doSqrt(std::span<double> values) __attribute__((noinline));
 static void doSqrt(std::span<double> values) {
    for (auto& v : values) {
       if (v < 0) throw InvalidValue{};

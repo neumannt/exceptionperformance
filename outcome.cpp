@@ -19,6 +19,7 @@ using result = outcome::result<T>;
 #define DOTHROW() return std::make_error_code(std::errc::argument_out_of_domain)
 #endif
 
+static result<void> doSqrt(std::span<double> values) noexcept __attribute__((noinline));
 static result<void> doSqrt(std::span<double> values) noexcept {
     for (auto &v: values) {
         if (v < 0) DOTHROW();

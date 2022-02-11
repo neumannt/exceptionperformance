@@ -6,6 +6,7 @@ namespace leaf = boost::leaf;
 
 struct InvalidValue {};
 
+static leaf::result<void> doSqrt(std::span<double> values) noexcept __attribute__((noinline));
 static leaf::result<void> doSqrt(std::span<double> values) noexcept {
    for (auto& v : values) {
       if (v < 0) return leaf::new_error(InvalidValue{});

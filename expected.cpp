@@ -6,6 +6,7 @@ using namespace std::experimental;
 
 struct InvalidValue {};
 
+static expected<void, InvalidValue> doSqrt(std::span<double> values) __attribute__((noinline));
 static expected<void, InvalidValue> doSqrt(std::span<double> values) {
    for (auto& v : values) {
       if (v < 0) return unexpected<InvalidValue>(InvalidValue{});

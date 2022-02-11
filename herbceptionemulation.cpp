@@ -4,6 +4,7 @@
 
 struct InvalidValue {};
 
+static tbv::result<void> doSqrt(std::span<double> values) noexcept __attribute__((noinline));
 static tbv::result<void> doSqrt(std::span<double> values) noexcept {
    for (auto& v : values) {
       if (v < 0) return tbv::throw_value(std::make_error_code(std::errc::argument_out_of_domain));

@@ -1,9 +1,9 @@
 <pre class='metadata'>
 Title: C++ exceptions are becoming more and more problematic
 Shortname: P2544
-Revision: 0
+Revision: 1
 Audience: EWG
-Status: P
+Status: D
 Group: WG21
 !URL: https://wg21.link/P2544/0
 !Source: <a href="https://github.com/neumannt/exceptionperformance/blob/master/paper/exceptionperformance.bs">https://github.com/neumannt/exceptionperformance/blob/master/paper/exceptionperformance.bs</a>

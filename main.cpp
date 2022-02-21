@@ -178,6 +178,14 @@ static vector<unsigned> interpretThreadCounts(string_view desc) {
 
 vector<tuple<const char*, TestedFunctionSqrt, TestedFunctionFib, bool>> tests = {{"baseline", &baselineSqrt, &baselineFib, false}, {"exceptions", &exceptionsSqrt, &exceptionsFib, true}, {"LEAF", &leafResultSqrt, &leafResultFib, true}, {"std::expected", &expectedSqrt, &expectedFib, true}, {"herbceptionemulation", &herbceptionEmulationSqrt, &herbceptionEmulationFib, true}, {"herbceptions", &herbceptionsSqrt, &herbceptionsFib, true}, {"outcome", &outcomeResultSqrt, &outcomeResultFib, true}};
 
+// Hook for the experimental lockfree unwinding logic
+#ifdef __linux__
+extern "C" int __attribute__((weak)) __libunwind_btreelookup_sync();
+#else
+void (*__libunwind_btreelookup_sync)() = nullptr;
+#endif
+
+
 int main(int argc, char* argv[]) {
    vector<unsigned> threadCounts = buildThreadCounts(thread::hardware_concurrency() / 2); // assuming half are hyperthreads. We can override that below
    bool explicitRun = false;
@@ -185,6 +193,13 @@ int main(int argc, char* argv[]) {
       string_view o = argv[index];
       if ((o == "--threads") && (index + 1 < argc)) {
          threadCounts = interpretThreadCounts(argv[++index]);
+      } else if (o == "--lockfree") {
+         if (!__libunwind_btreelookup_sync) {
+            cout << "lockfree unwinding not supported on this platform" << endl;
+            return 1;
+         } else {
+            __libunwind_btreelookup_sync();
+         }
       } else {
          bool found = false;
          for (auto& t : tests)

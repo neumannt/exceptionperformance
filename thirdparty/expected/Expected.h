@@ -413,8 +413,9 @@ using base_select = typename std::conditional<
 } // namespace __expected_detail
 
 template<class T, class E>
-class expected : private __expected_detail::base_select<T, E> {
-    typedef __expected_detail::base_select<T, E> base;
+class expected {
+    using base = __expected_detail::base_select<T, E>;
+    base base_;
 
 public:
     typedef typename base::value_type value_type;
@@ -429,19 +430,19 @@ public:
         using type = expected<U, error_type>;
     };
 
-    constexpr expected() : base(__expected_detail::value_tag) { }
+    constexpr expected() : base_(__expected_detail::value_tag) { }
     expected(const expected&) = default;
     expected(expected&&) = default;
 
-    constexpr expected(const value_type& e) : base(__expected_detail::value_tag, e) { }
-    constexpr expected(value_type&& e) : base(__expected_detail::value_tag, std::forward<value_type>(e)) { }
-    template<class... Args> constexpr explicit expected(std::in_place_t, Args&&... args) : base(__expected_detail::value_tag, value_type(std::forward<Args>(args)...)) { }
+    constexpr expected(const value_type& e) : base_(__expected_detail::value_tag, e) { }
+    constexpr expected(value_type&& e) : base_(__expected_detail::value_tag, std::forward<value_type>(e)) { }
+    template<class... Args> constexpr explicit expected(std::in_place_t, Args&&... args) : base_(__expected_detail::value_tag, value_type(std::forward<Args>(args)...)) { }
     // template<class U, class... Args> constexpr explicit expected(in_place_t, std::initializer_list<U>, Args&&...);
-    constexpr expected(const unexpected_type& u) : base(__expected_detail::error_tag, u.value()) { }
-    constexpr expected(unexpected_type&& u) : base(__expected_detail::error_tag, std::forward<unexpected_type>(u).value()) { }
-    template<class Err> constexpr expected(const unexpected<Err>& u) : base(__expected_detail::error_tag, u.value()) { }
-    template<class Err> constexpr expected(unexpected<Err>&& u) : base(__expected_detail::error_tag, std::forward<Err>(u.value())) { }
-    template<class... Args> constexpr explicit expected(unexpected_t, Args&&... args) : base(__expected_detail::value_tag, unexpected_type(std::forward<Args>(args)...)) { }
+    constexpr expected(const unexpected_type& u) : base_(__expected_detail::error_tag, u.value()) { }
+    constexpr expected(unexpected_type&& u) : base_(__expected_detail::error_tag, std::forward<unexpected_type>(u).value()) { }
+    template<class Err> constexpr expected(const unexpected<Err>& u) : base_(__expected_detail::error_tag, u.value()) { }
+    template<class Err> constexpr expected(unexpected<Err>&& u) : base_(__expected_detail::error_tag, std::forward<Err>(u.value())) { }
+    template<class... Args> constexpr explicit expected(unexpected_t, Args&&... args) : base_(__expected_detail::value_tag, unexpected_type(std::forward<Args>(args)...)) { }
     // template<class U, class... Args> constexpr explicit expected(unexpected_t, std::initializer_list<U>, Args&&...);
 
     ~expected() = default;
@@ -457,49 +458,50 @@ public:
     void swap(expected& o)
     {
         using std::swap;
-        if (base::has && o.has)
-            swap(base::s.val, o.s.val);
-        else if (base::has && !o.has) {
+        if (base_.has && o.has)
+            swap(base_.s.val, o.s.val);
+        else if (base_.has && !o.has) {
             error_type e(std::move(o.s.err));
             __expected_detail::destroy(o.s.err);
-            ::new (std::addressof(o.s.val)) value_type(std::move(base::s.val));
-            __expected_detail::destroy(base::s.val);
-            ::new (std::addressof(base::s.err)) error_type(std::move(e));
-            swap(base::has, o.has);
-        } else if (!base::has && o.has) {
+            ::new (std::addressof(o.s.val)) value_type(std::move(base_.s.val));
+            __expected_detail::destroy(base_.s.val);
+            ::new (std::addressof(base_.s.err)) error_type(std::move(e));
+            swap(base_.has, o.has);
+        } else if (!base_.has && o.has) {
             value_type v(std::move(o.s.val));
             __expected_detail::destroy(o.s.val);
-            ::new (std::addressof(o.s.err)) error_type(std::move(base::s.err));
-            __expected_detail::destroy(base::s.err);
-            ::new (std::addressof(base::s.val)) value_type(std::move(v));
-            swap(base::has, o.has);
+            ::new (std::addressof(o.s.err)) error_type(std::move(base_.s.err));
+            __expected_detail::destroy(base_.s.err);
+            ::new (std::addressof(base_.s.val)) value_type(std::move(v));
+            swap(base_.has, o.has);
         } else
-            swap(base::s.err, o.s.err);
+            swap(base_.s.err, o.s.err);
     }
 
-    constexpr const value_type* operator->() const { return &base::s.val; }
-    value_type* operator->() { return &base::s.val; }
-    constexpr const value_type& operator*() const & { return base::s.val; }
-    value_type& operator*() & { return base::s.val; }
-    constexpr const value_type&& operator*() const && { return std::move(base::s.val); }
-    constexpr value_type&& operator*() && { return std::move(base::s.val); }
-    constexpr explicit operator bool() const { return base::has; }
-    constexpr bool has_value() const { return base::has; }
-    constexpr const value_type& value() const & { return base::has ? base::s.val : (__EXPECTED_THROW(bad_expected_access<error_type>(base::s.err)), base::s.val); }
-    constexpr value_type& value() & { return base::has ? base::s.val : (__EXPECTED_THROW(bad_expected_access<error_type>(base::s.err)), base::s.val); }
-    constexpr const value_type&& value() const && { return std::move(base::has ? base::s.val : (__EXPECTED_THROW(bad_expected_access<error_type>(base::s.err)), base::s.val)); }
-    constexpr value_type&& value() && { return std::move(base::has ? base::s.val : (__EXPECTED_THROW(bad_expected_access<error_type>(base::s.err)), base::s.val)); }
-    constexpr const error_type& error() const & { return !base::has ? base::s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base::s.err); }
-    error_type& error() & { return !base::has ? base::s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base::s.err); }
-    constexpr error_type&& error() && { return std::move(!base::has ? base::s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base::s.err)); }
-    constexpr const error_type&& error() const && { return std::move(!base::has ? base::s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base::s.err)); }
-    template<class U> constexpr value_type value_or(U&& u) const & { return base::has ? **this : static_cast<value_type>(std::forward<U>(u)); }
-    template<class U> value_type value_or(U&& u) && { return base::has ? std::move(**this) : static_cast<value_type>(std::forward<U>(u)); }
+    constexpr const value_type* operator->() const { return &base_.s.val; }
+    value_type* operator->() { return &base_.s.val; }
+    constexpr const value_type& operator*() const & { return base_.s.val; }
+    value_type& operator*() & { return base_.s.val; }
+    constexpr const value_type&& operator*() const && { return std::move(base_.s.val); }
+    constexpr value_type&& operator*() && { return std::move(base_.s.val); }
+    constexpr explicit operator bool() const { return base_.has; }
+    constexpr bool has_value() const { return base_.has; }
+    constexpr const value_type& value() const & { return base_.has ? base_.s.val : (__EXPECTED_THROW(bad_expected_access<error_type>(base_.s.err)), base_.s.val); }
+    constexpr value_type& value() & { return base_.has ? base_.s.val : (__EXPECTED_THROW(bad_expected_access<error_type>(base_.s.err)), base_.s.val); }
+    constexpr const value_type&& value() const && { return std::move(base_.has ? base_.s.val : (__EXPECTED_THROW(bad_expected_access<error_type>(base_.s.err)), base_.s.val)); }
+    constexpr value_type&& value() && { return std::move(base_.has ? base_.s.val : (__EXPECTED_THROW(bad_expected_access<error_type>(base_.s.err)), base_.s.val)); }
+    constexpr const error_type& error() const & { return !base_.has ? base_.s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base_.s.err); }
+    error_type& error() & { return !base_.has ? base_.s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base_.s.err); }
+    constexpr error_type&& error() && { return std::move(!base_.has ? base_.s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base_.s.err)); }
+    constexpr const error_type&& error() const && { return std::move(!base_.has ? base_.s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base_.s.err)); }
+    template<class U> constexpr value_type value_or(U&& u) const & { return base_.has ? **this : static_cast<value_type>(std::forward<U>(u)); }
+    template<class U> value_type value_or(U&& u) && { return base_.has ? std::move(**this) : static_cast<value_type>(std::forward<U>(u)); }
 };
 
 template<class E>
-class expected<void, E> : private __expected_detail::base_select<void, E> {
-    typedef __expected_detail::base_select<void, E> base;
+class expected<void, E> {
+    using base = __expected_detail::base_select<void, E>;
+    base base_;
 
 public:
     typedef typename base::value_type value_type;
@@ -514,13 +516,13 @@ public:
         using type = expected<U, error_type>;
     };
 
-    constexpr expected() : base(__expected_detail::value_tag) { }
+    constexpr expected() : base_(__expected_detail::value_tag) { }
     expected(const expected&) = default;
     expected(expected&&) = default;
     // constexpr explicit expected(in_place_t);
-    constexpr expected(unexpected_type const& u) : base(__expected_detail::error_tag, u.value()) { }
-    constexpr expected(unexpected_type&& u) : base(__expected_detail::error_tag, std::forward<unexpected_type>(u).value()) { }
-    template<class Err> constexpr expected(unexpected<Err> const& u) : base(__expected_detail::error_tag, u.value()) { }
+    constexpr expected(unexpected_type const& u) : base_(__expected_detail::error_tag, u.value()) { }
+    constexpr expected(unexpected_type&& u) : base_(__expected_detail::error_tag, std::forward<unexpected_type>(u).value()) { }
+    template<class Err> constexpr expected(unexpected<Err> const& u) : base_(__expected_detail::error_tag, u.value()) { }
 
     ~expected() = default;
 
@@ -533,25 +535,25 @@ public:
     void swap(expected& o)
     {
         using std::swap;
-        if (base::has && o.has) {
+        if (base_.has && o.has) {
             // Do nothing.
-        } else if (base::has && !o.has) {
+        } else if (base_.has && !o.has) {
             error_type e(std::move(o.s.err));
-            ::new (std::addressof(base::s.err)) error_type(e);
-            swap(base::has, o.has);
-        } else if (!base::has && o.has) {
-            ::new (std::addressof(o.s.err)) error_type(std::move(base::s.err));
-            swap(base::has, o.has);
+            ::new (std::addressof(base_.s.err)) error_type(e);
+            swap(base_.has, o.has);
+        } else if (!base_.has && o.has) {
+            ::new (std::addressof(o.s.err)) error_type(std::move(base_.s.err));
+            swap(base_.has, o.has);
         } else
-            swap(base::s.err, o.s.err);
+            swap(base_.s.err, o.s.err);
     }
 
-    constexpr explicit operator bool() const { return base::has; }
-    constexpr bool has_value() const { return base::has; }
-    void value() const { !base::has ? __EXPECTED_THROW(bad_expected_access<void>()) : void(); }
-    constexpr const E& error() const & { return !base::has ? base::s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base::s.err); }
-    E& error() & { return !base::has ? base::s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base::s.err); }
-    constexpr E&& error() && { return std::move(!base::has ? base::s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base::s.err)); }
+    constexpr explicit operator bool() const { return base_.has; }
+    constexpr bool has_value() const { return base_.has; }
+    void value() const { !base_.has ? __EXPECTED_THROW(bad_expected_access<void>()) : void(); }
+    constexpr const E& error() const & { return !base_.has ? base_.s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base_.s.err); }
+    E& error() & { return !base_.has ? base_.s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base_.s.err); }
+    constexpr E&& error() && { return std::move(!base_.has ? base_.s.err : (__EXPECTED_THROW(bad_expected_access<void>()), base_.s.err)); }
 };
 
 template<class T, class E> constexpr bool operator==(const expected<T, E>& x, const expected<T, E>& y) { return bool(x) == bool(y) && (x ? x.value() == y.value() : x.error() == y.error()); }

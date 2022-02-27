@@ -7,7 +7,7 @@ bin/%.o: %.cpp
 	$(CXX) -O3 -std=c++20 -c -W -Wall $(CXXFLAGS-$(basename $@)) -o$@ $<
 
 bin/runtests: bin/main.o bin/exceptions.o bin/leaf.o bin/expected.o bin/herbceptionemulation.o bin/herbceptions.o bin/outcome.o bin/baseline.o
-	$(CXX) -o$@ $^
+	$(CXX) -o$@ $^ -lpthread
 
 bin/benchmark/src/libbenchmark.a:
 	@mkdir -p bin/benchmark

@@ -139,19 +139,19 @@ std::expected {#expected}
 
 The std:expected proposal [[P0323R11]] introduces a variant type that either holds a value or
 an error object, which can be used to propagate the error state as a return value instead of
-throwing an exception. This solves the performance problem for sqrt, but it has a significant
+throwing an exception. This solves the performance problem for sqrt, but it has some
 runtime overhead for fib:
 
 <table>
     <thead><tr><td>failure rate</td><td>0.0%</td><td>0.1%</td><td>1.0%</td><td>10%</td></thead>
     <tr><td>sqrt</td><td>18ms</td><td>18ms</td><td>18ms</td><td>16ms</td></tr>
-    <tr><td>fib</td><td>63ms</td><td>63ms</td><td>63ms</td><td>63ms</td></tr>
+    <tr><td>fib</td><td>20ms</td><td>21ms</td><td>21ms</td><td>21ms</td></tr>
 </table>
 
-Single threaded the fib code using std::expected is more than four times slower than using
-traditional exceptions. Of course the overhead is less when the function itself is more expensive,
-as in the sqrt scenario. Nevertheless the overhead is so high that std::expected is not a
-good general purpose replacement for traditional exceptions.
+The performance of std::expected is quite sensitive to implementation details, the code
+referenced by [[P0323R11]] is much slower than the version used here and needs 63ms for fib.
+The fixed version is much better, but there is still some slow-down compared to
+traditional exceptions.
 
 boost::LEAF {#leaf}
 -------------------
@@ -287,7 +287,7 @@ Acknowledgments {#acknowledgments}
 ==================================
 
 - Thanks to Emil Dotchevski and Peter Dimov for their feedback
-
+- Thanks to Barry Revzin for improving the implementation of std::expected
 
 <pre class=biblio>
 {
